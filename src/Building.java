@@ -41,5 +41,11 @@ public class Building {
 
 		}
 	}
-	
+	public void combinebuilding(Building[] buildings){
+		int p=this.point;
+		for (Building b:buildings){
+			p+=b.getPoint();
+		}
+		this.setPoint(p);
+	}	
 }
