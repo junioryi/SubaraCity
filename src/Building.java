@@ -1,19 +1,28 @@
 
 public class Building {
-	private int level;
-	private char color;
 	private int point;
+	private int level;
+	private Color color;
+	private ItemOnField item;
 	
+	public Building(int point,Color color){
+		this.point=point;
+		this.item=ItemOnField.people;
+		this.color=color;
+	}	
+	public Building(){
+		this(1,Color.green);		
+	}
+
+
 	public int getLevel() {
 		return level;
 	}
-	public void setLevel(int level) {
-		this.level = level;
-	}
-	public char getColor() {
+
+	public Color getColor() {
 		return color;
 	}
-	public void setColor(char color) {
+	public void setColor(Color color) {
 		this.color = color;
 	}
 	public int getPoint() {
@@ -21,6 +30,16 @@ public class Building {
 	}
 	public void setPoint(int point) {
 		this.point = point;
+		if (this.point==1){
+			this.item=ItemOnField.people;
+		}else if(this.point<4){
+			this.item=ItemOnField.tree;
+		}else if (this.point<6){
+			this.item=ItemOnField.house;
+		}else {
+			this.item=ItemOnField.building;
+
+		}
 	}
 	
 }
