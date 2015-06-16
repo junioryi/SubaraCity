@@ -1,4 +1,5 @@
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
 import java.awt.Graphics;
 import java.awt.Color;
 import java.awt.Font;
@@ -14,36 +15,48 @@ public class Building extends JPanel{
 	public boolean isSearched;
 	public boolean toBeMerged;
 
+	private int xFixed;
+	private int yFixed;
 	private int x;
 	private int y;
-
+	private static int colors = 3;
+	
 	public static final int WIDTH = 100;
 	public static final int HEIGHT = 100;
 	public static final int LEFT_BOARDER = 50;
 	public static final int UPPER_BOARDER = 200;
+
+	public static final int SET_GOLDEN_POINT = 16;
+	public static final int UPGRADE_POINT = 32;
 	
 	public Building(int col,int row){
 		super();
-		point=randomPoint();
+
+		point = randomPoint();
 		// level=
 		// item=ItemOnField.people;	
-		color=randomColor();
+		color = randomColor();
 		isSearched = false;
 		toBeMerged = false;
 		
 		this.col = col;
 		this.row = row;
-		x = LEFT_BOARDER + col*WIDTH;
-    	y = UPPER_BOARDER + row*HEIGHT;
+    	updateLocation();
     	setBackground(color);
-    	setLocation(x, y);
         setSize(WIDTH, HEIGHT);
+		setBorder(BorderFactory.createLineBorder(Color.black));
 	}	
 	public int getCol(){
 		return col;
 	}
 	public int getRow(){
 		return row;
+	}
+	public int getX(){
+		return x;
+	}
+	public int getY(){
+		return y;
 	}
 	public Color getColor() {
 		return color;
@@ -66,28 +79,48 @@ public class Building extends JPanel{
 	public int getLevel() {
 		return level;
 	}
-	public void resetRow(int row){
+	public void updateRow(int row){
 		this.row = row;
 	}
-	public void resetLocation(){
-		x = 50 + col*100;
-    	y = 200 + row*100;
+	public void updateLocation(){
+		x = LEFT_BOARDER + col*WIDTH;
+    	y = UPPER_BOARDER + row*HEIGHT;
+    	xFixed = x;
+    	yFixed = y;
     	setLocation(x, y);
 	}
 	public void addPoint(Building merged){
 		point += merged.getPoint();
 		level = (int) ( Math.log(point) / Math.log(2) ) ;	//to be modified
 	}
+	public static void addGray(){
+		colors = 4;
+	}
+	public void setGolden(){
+		color = new Color(255, 215, 0);			//golden
+    	setBackground(color);
+		point = SET_GOLDEN_POINT;
+	}
+	public void upgrade(){
+		setBorder(BorderFactory.createLineBorder(Color.white));
+		removeMouseListener(getMouseListeners()[0]);
+	}
+	public void moveTo(Building target){
+		x += ((target.x - xFixed)/10);
+		y += ((target.y - yFixed)/10);
+	}
 	//generate random color
 	private static Color randomColor(){
-		int r = (int) (Math.random() * 3);
+		int r = (int) (Math.random() * colors);
 		switch (r){
 			case 0:
-				return Color.green;
+				return new Color(50, 205, 50);	//bright green				
 			case 1:
-				return Color.gray;
+				return new Color(0, 100, 0);	//dark green
 			case 2:
-				return new Color(200, 150, 0);
+				return new Color(139, 69, 19);	//brown
+			case 3:
+				return Color.gray;				
 			default:
 				return null;
 		}
