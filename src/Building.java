@@ -26,12 +26,11 @@ public class Building extends JPanel{
 	public static final int LEFT_BOARDER = 50;
 	public static final int UPPER_BOARDER = 200;
 
-	public static final int SET_GOLDEN_POINT = 16;
-	public static final int UPGRADE_POINT = 32;
+	public static final int CHANGE_POINT = 64;
+	public static final int UPGRADE_POINT = 128;
 	
 	public Building(int col,int row){
 		super();
-
 		point = randomPoint();
 		// level=
 		// item=ItemOnField.people;	
@@ -96,12 +95,14 @@ public class Building extends JPanel{
 	public static void addGray(){
 		colors = 4;
 	}
-	public void setGolden(){
-		color = new Color(255, 215, 0);			//golden
-    	setBackground(color);
-		point = SET_GOLDEN_POINT;
+	public void change(){
+    	color = new Color(190, 190, 190);		//gray
+    	setBackground(new Color(190, 190, 190));
+		point = CHANGE_POINT;
 	}
 	public void upgrade(){
+		color = new Color(255, 215, 0);			//golden
+		setBackground(new Color(255, 215, 0));	
 		setBorder(BorderFactory.createLineBorder(Color.white));
 		removeMouseListener(getMouseListeners()[0]);
 	}
@@ -120,7 +121,7 @@ public class Building extends JPanel{
 			case 2:
 				return new Color(139, 69, 19);	//brown
 			case 3:
-				return Color.gray;				
+				return new Color(105, 105, 105);//dark gray				
 			default:
 				return null;
 		}
@@ -133,7 +134,7 @@ public class Building extends JPanel{
 	//show point
     public void paintComponent(Graphics g){
         super.paintComponent(g);
-        g.setFont(new Font("Monospaced", Font.BOLD, 72));
+        g.setFont(new Font("Monospaced", Font.BOLD, 36));
         g.drawString(Integer.toString(point), 10, 80);
     } 
 }

@@ -3,7 +3,8 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
-import java.awt.GridLayout;
+import javax.swing.ImageIcon;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
@@ -37,28 +38,32 @@ public class City extends JFrame{
 		setLayout(null);
 		setResizable(false);
 		setVisible(true);
-
+		
+		JLabel background = new JLabel(new ImageIcon("city.png"));
+		setContentPane(background);
 		for(int col = 0; col < 5; col++){
 			for(int row = 0 ; row < 5 ; row++){
 				buildings[col][row] = new Building(col, row);
 				buildings[col][row].addMouseListener(new ActionClick());
-				add(buildings[col][row]);
+				getContentPane().add(buildings[col][row]);
 			}
 		}
 		
 		panel = new JPanel();
 		panel.setLocation(PANEL_X, PANEL_Y);
         panel.setSize(PANEL_WIDTH, PANEL_HEIGHT);
-        panel.setLayout(new GridLayout(1, 2));
+        panel.setLayout(new BorderLayout());
+        panel.setOpaque(false);
 
         updatePoint();
         pointLabel = new JLabel("Point : " + point);
+        pointLabel.setLocation(50, 50);
         pointLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        panel.add(pointLabel);
+        panel.add(pointLabel, BorderLayout.EAST);
 
         moveLabel = new JLabel("Moves : " + move);
         moveLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        panel.add(moveLabel);
+        panel.add(moveLabel, BorderLayout.WEST);
         
         add(panel);
         validate();
@@ -109,7 +114,7 @@ public class City extends JFrame{
 		//search up
 		if( row != 0 && buildings[col][row-1].isSearched == false ){
 			buildings[col][row-1].isSearched = true; 
-			if( color.equals( buildings[col][row-1].getColor() ) && buildings[col][row-1].getPoint() <= Building.SET_GOLDEN_POINT ){
+			if( color.equals( buildings[col][row-1].getColor() ) && buildings[col][row-1].getPoint() <= Building.CHANGE_POINT ){
 				buildings[col][row-1].toBeMerged = true;
 				searchNear(buildings[col][row-1]);
 			}
@@ -117,15 +122,15 @@ public class City extends JFrame{
 		//search down
 		if( row != 4 && buildings[col][row+1].isSearched == false ){
 			buildings[col][row+1].isSearched = true;  
-			if( color.equals( buildings[col][row+1].getColor() ) && buildings[col][row+1].getPoint() <= Building.SET_GOLDEN_POINT ){
+			if( color.equals( buildings[col][row+1].getColor() ) && buildings[col][row+1].getPoint() <= Building.CHANGE_POINT ){
 				buildings[col][row+1].toBeMerged = true;
 				searchNear(buildings[col][row+1]);
 			}
 		}
 		//search left
 		if( col != 0 && buildings[col-1][row].isSearched == false ){
-			buildings[col-1][row].isSearched = true; 
-			if( color.equals( buildings[col-1][row].getColor() ) && buildings[col-1][row].getPoint() <= Building.SET_GOLDEN_POINT ){
+			buildings[col-1][row].isSearched = true;
+			if( color.equals( buildings[col-1][row].getColor() ) && buildings[col-1][row].getPoint() <= Building.CHANGE_POINT ){
 				buildings[col-1][row].toBeMerged = true;
 				searchNear(buildings[col-1][row]);
 			}
@@ -133,7 +138,7 @@ public class City extends JFrame{
 		//search right
 		if( col != 4 && buildings[col+1][row].isSearched == false ){
 			buildings[col+1][row].isSearched = true; 
-			if( color.equals( buildings[col+1][row].getColor() ) && buildings[col+1][row].getPoint() <= Building.SET_GOLDEN_POINT ){
+			if( color.equals( buildings[col+1][row].getColor() ) && buildings[col+1][row].getPoint() <= Building.CHANGE_POINT ){
 				buildings[col+1][row].toBeMerged = true;
 				searchNear(buildings[col+1][row]);
 			}
@@ -225,8 +230,8 @@ public class City extends JFrame{
 				if(buildings[i][j].getPoint() >= Building.UPGRADE_POINT && buildings[i][j].getMouseListeners().length != 0){
 					buildings[i][j].upgrade();
 				}
-				else if(buildings[i][j].getPoint() >= Building.SET_GOLDEN_POINT && buildings[i][j].getMouseListeners().length != 0){
-					buildings[i][j].setGolden();
+				else if(buildings[i][j].getPoint() >= Building.CHANGE_POINT && buildings[i][j].getMouseListeners().length != 0){
+					buildings[i][j].change();
 				}
 			}
 		}	
