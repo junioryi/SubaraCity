@@ -33,7 +33,6 @@ public class City extends JFrame{
 	private Timer timer;
 	private int timerCount;
 	private boolean clickDisabled;		//avoid clicking during moving
-	private AudioPlayer mergeSound;
 
 	public City(){
 		super();
