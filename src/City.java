@@ -4,8 +4,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import javax.swing.ImageIcon;
+import javax.swing.BorderFactory;
+import javax.swing.border.EtchedBorder;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -19,8 +20,10 @@ public class City extends JFrame{
 	public static final int PANEL_HEIGHT = 100;
 	public static final int PANEL_X = 50;
 	public static final int PANEL_Y = 50;
+	public static int colors = 3;
 
-	private JPanel panel;
+	private JPanel scoreBoard;
+	private JLabel background;
 	private JLabel pointLabel;
 	private JLabel moveLabel;
 	private Building[][] buildings = new Building[5][5];
@@ -29,7 +32,8 @@ public class City extends JFrame{
 	private boolean isMoved;			//avoid add move without moving
 	private Timer timer;
 	private int timerCount;
-	private boolean clickDisabled;	//avoid error
+	private boolean clickDisabled;		//avoid clicking during moving
+	private AudioPlayer mergeSound;
 
 	public City(){
 		super();
@@ -39,63 +43,61 @@ public class City extends JFrame{
 		setResizable(false);
 		setVisible(true);
 		
-		JLabel background = new JLabel(new ImageIcon("city.png"));
+		JLabel background = new JLabel(new ImageIcon("img/city.png"));
 		setContentPane(background);
+
 		for(int col = 0; col < 5; col++){
 			for(int row = 0 ; row < 5 ; row++){
 				buildings[col][row] = new Building(col, row);
 				buildings[col][row].addMouseListener(new ActionClick());
-				getContentPane().add(buildings[col][row]);
+				add(buildings[col][row]);
 			}
 		}
-		
-		panel = new JPanel();
-		panel.setLocation(PANEL_X, PANEL_Y);
-        panel.setSize(PANEL_WIDTH, PANEL_HEIGHT);
-        panel.setLayout(new BorderLayout());
-        panel.setOpaque(false);
 
-        updatePoint();
-        pointLabel = new JLabel("Point : " + point);
-        pointLabel.setLocation(50, 50);
+		scoreBoard = new JPanel();
+		scoreBoard.setLocation(PANEL_X, PANEL_Y);
+        scoreBoard.setSize(PANEL_WIDTH, PANEL_HEIGHT);
+        scoreBoard.setLayout(new BorderLayout());
+        scoreBoard.setOpaque(false);
+
+        pointLabel = new JLabel();
         pointLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        panel.add(pointLabel, BorderLayout.EAST);
+        scoreBoard.add(pointLabel, BorderLayout.EAST);
 
-        moveLabel = new JLabel("Moves : " + move);
+        moveLabel = new JLabel();
         moveLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        panel.add(moveLabel, BorderLayout.WEST);
+        scoreBoard.add(moveLabel, BorderLayout.WEST);
         
-        add(panel);
-        validate();
-        repaint();
+        updatePanel();
+        add(scoreBoard);
 	}
 	
 	public void click(Building clicked){
 		if(timerCount == 0){
 			clickDisabled = true;	//disable panel during panel moving
-			isMoved = false;		
+			timer.start();
+
 			search(clicked);
-			timer.start();		
 		}
-		else if(timerCount < 10){
+		else if(timerCount < 10)
 			merging(clicked);
-		}
-		else{
-			timer.stop();
+		else if(timerCount == 10)
 			merge(clicked);
+		else if(timerCount < 26)
+			falling();
+		else{
 			fall();
 			fill();
-			updatePoint();
-			updateMove();
 			updatePanel();
-			checkBuildings();
 			repaint();
 			check();
+			
+			timer.stop();
 			clickDisabled = false;	//enable panel to be clicked 
 		}
 		timerCount++;
 	}
-	//search for same-color building to be merged
+	//search for same-color buildings to be merged
 	public void search(Building clicked){
 		searchNear(clicked);
 
@@ -105,42 +107,46 @@ public class City extends JFrame{
 			}
 		}
 	}
-	//search for nearby same-color building
-	public void searchNear(Building b){
-		int row = b.getRow();
-		int col = b.getCol();
-		Color color = b.getColor();
-		buildings[col][row].isSearched = true;	//avoid self search
+	//search for nearby same-color buildings to be merged
+	private void searchNear(Building center){
+		int row = center.getRow();
+		int col = center.getCol();
+		Colors color = center.getColor();
+		center.isSearched = true;	//avoid self search
 		//search up
 		if( row != 0 && buildings[col][row-1].isSearched == false ){
-			buildings[col][row-1].isSearched = true; 
-			if( color.equals( buildings[col][row-1].getColor() ) && buildings[col][row-1].getPoint() <= Building.CHANGE_POINT ){
-				buildings[col][row-1].toBeMerged = true;
-				searchNear(buildings[col][row-1]);
+			Building up = buildings[col][row-1];
+			up.isSearched = true; 
+			if( color.equals(up.getColor()) ){
+				up.toBeMerged = true;
+				searchNear(up);
 			}
 		}
 		//search down
 		if( row != 4 && buildings[col][row+1].isSearched == false ){
-			buildings[col][row+1].isSearched = true;  
-			if( color.equals( buildings[col][row+1].getColor() ) && buildings[col][row+1].getPoint() <= Building.CHANGE_POINT ){
-				buildings[col][row+1].toBeMerged = true;
-				searchNear(buildings[col][row+1]);
+			Building down = buildings[col][row+1];
+			down.isSearched = true;  
+			if( color.equals(down.getColor()) ){
+				down.toBeMerged = true;
+				searchNear(down);
 			}
 		}
 		//search left
 		if( col != 0 && buildings[col-1][row].isSearched == false ){
-			buildings[col-1][row].isSearched = true;
-			if( color.equals( buildings[col-1][row].getColor() ) && buildings[col-1][row].getPoint() <= Building.CHANGE_POINT ){
-				buildings[col-1][row].toBeMerged = true;
-				searchNear(buildings[col-1][row]);
+			Building left = buildings[col-1][row];
+			left.isSearched = true;
+			if( color.equals( left.getColor()) ){
+				left.toBeMerged = true;
+				searchNear(left);
 			}
 		}
 		//search right
 		if( col != 4 && buildings[col+1][row].isSearched == false ){
-			buildings[col+1][row].isSearched = true; 
-			if( color.equals( buildings[col+1][row].getColor() ) && buildings[col+1][row].getPoint() <= Building.CHANGE_POINT ){
-				buildings[col+1][row].toBeMerged = true;
-				searchNear(buildings[col+1][row]);
+			Building right = buildings[col+1][row];
+			right.isSearched = true; 
+			if( color.equals( right.getColor()) ){
+				right.toBeMerged = true;
+				searchNear(right);
 			}
 		}
 	}	
@@ -148,8 +154,7 @@ public class City extends JFrame{
 		for(int i = 0; i < 5; i++){
 			for(int j = 0 ; j < 5 ; j++){
 				if(buildings[i][j].toBeMerged == true){
-					buildings[i][j].moveTo(clicked);
-					repaint();
+					buildings[i][j].mergeTo(clicked);
 				}
 			}
 		}
@@ -160,50 +165,69 @@ public class City extends JFrame{
 			for(int j = 0 ; j < 5 ; j++){
 				if(buildings[i][j].toBeMerged == true){
 					isMoved = true;
+					
 					clicked.addPoint(buildings[i][j]);
+					clicked.check();
+
 					remove(buildings[i][j]);
 					buildings[i][j] = null;
+				}
+			}
+		}
+		repaint();
+	}
+	public void falling(){
+		Building[][] tmp = new Building[5][5];
+		for(int col = 0; col < 5; col++){
+			int rowTmp = 4;
+			for(int row = 4; row >= 0; row--){
+				if(buildings[col][row] != null){
+					tmp[col][rowTmp] = new Building(col, rowTmp);
+					buildings[col][row].fallTo(tmp[col][rowTmp]);
+					rowTmp--;
 				}
 			}
 		}
 	}
 	//fall the building
 	public void fall(){
+		Building[][] tmp = new Building[5][5];
 		for(int col = 0; col < 5; col++){
-			colFall(buildings[col]);
-		}
-	}
-	public void colFall(Building[] colBuildings){
-		Building[] tmp = new Building[5];
-		int rowTmp = 4;
-		for(int row = 4; row >= 0; row--){
-			if(colBuildings[row] != null){
-				tmp[rowTmp] = colBuildings[row];
-				tmp[rowTmp].updateRow(rowTmp);
-				tmp[rowTmp].updateLocation();
-				rowTmp--;
+			int rowTmp = 4;
+			for(int row = 4; row >= 0; row--){
+				if(buildings[col][row] != null){
+					tmp[col][rowTmp] = buildings[col][row];
+					tmp[col][rowTmp].setRow(rowTmp);
+					tmp[col][rowTmp].updateLocation();
+					rowTmp--;
+				}
 			}
 		}
-		for(int row = 0; row < 5; row++){
-			colBuildings[row] = tmp[row];
+		for(int col = 0; col < 5; col++){
+			for(int row = 0; row < 5; row++){
+				buildings[col][row] = tmp[col][row];
+			}
 		}
 	}
 	//fill the blank
 	public void fill(){
 		for(int col = 0; col < 5; col++){
-			colFill(buildings[col], col);
-		}
-	}
-	public void colFill(Building[] colBuildings, int col){
-		for(int row = 0; row < 5; row++){
-			if(colBuildings[row] == null){
-				colBuildings[row] = new Building(col, row); 
-				buildings[col][row].addMouseListener(new ActionClick());
-				add(buildings[col][row]);			
+			for(int row = 0; row < 5; row++){
+				if(buildings[col][row] == null){
+					buildings[col][row] = new Building(col, row); 
+					buildings[col][row].addMouseListener(new ActionClick());
+					add(buildings[col][row]);			
+				}
 			}
 		}
 	}
-	public void updatePoint(){
+	public void updatePanel(){
+		updatePoint();
+		updateMove();
+		pointLabel.setText("Point : " + point);
+        moveLabel.setText("Moves : " + move);
+	}
+	private void updatePoint(){
 		int tmp = 0;
 		for(int i = 0; i < 5; i++){
 			for(int j = 0 ; j < 5 ; j++){
@@ -212,30 +236,17 @@ public class City extends JFrame{
 		}
 		point = tmp;
 	}
-	public void updateMove(){
+	private void updateMove(){
 		if(isMoved == true){
 			move++;
 		}
 		if(move == 30){
-			Building.addGray();
+			// Building.addGray();
 		}
 	}
-	public void updatePanel(){
-		pointLabel.setText("Point : " + point);
-        moveLabel.setText("Moves : " + move);
-	}
-	public void checkBuildings(){
-		for(int i = 0; i < 5; i++){
-			for(int j = 0 ; j < 5 ; j++){
-				if(buildings[i][j].getPoint() >= Building.UPGRADE_POINT && buildings[i][j].getMouseListeners().length != 0){
-					buildings[i][j].upgrade();
-				}
-				else if(buildings[i][j].getPoint() >= Building.CHANGE_POINT && buildings[i][j].getMouseListeners().length != 0){
-					buildings[i][j].change();
-				}
-			}
-		}	
-	}
+	public static void addGray(){
+		colors = 4;
+	}	
 	public void check(){
 		boolean isOver = true;
 		for(int i = 0; i < 5; i++){
@@ -266,7 +277,6 @@ public class City extends JFrame{
 			dispose();
 		}
 	}
-
 	private class ActionClick extends MouseAdapter{
 		public void mouseClicked(MouseEvent e){
 			if(!clickDisabled){
@@ -277,6 +287,7 @@ public class City extends JFrame{
 					}
 				});
 				timerCount = 0;
+				isMoved = false;					
 				click(clicked);
 			}
 		}
