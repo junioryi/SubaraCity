@@ -6,8 +6,9 @@ import javax.swing.Timer;
 import javax.swing.ImageIcon;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
-import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.ActionListener;
@@ -22,16 +23,18 @@ public class City extends JFrame{
 	public static final int PANEL_Y = 50;
 	public static int colors = 3;
 
-	private JPanel scoreBoard;
-	private JLabel background;
-	private JLabel pointLabel;
-	private JLabel moveLabel;
+	private JPanel scoreBoard = new JPanel();
+	private JLabel background = new JLabel(new ImageIcon("img/city.png"));
+	private JLabel pointLabel = new myLabel();
+	private JLabel moveLabel = new myLabel();
+	private JLabel removeLabel = new myLabel(new ImageIcon("img/excavator.png"));
 	private Building[][] buildings = new Building[5][5];
 	private int point = 0;
 	private int move = 0;
-	private boolean isMoved;			//avoid add move without moving
-	private Timer timer;
+	private int remove = 1;
 	private int timerCount;
+	private Timer timer;
+	private boolean isMoved;			//avoid add move without moving
 	private boolean clickDisabled;		//avoid clicking during moving
 
 	public City(){
@@ -41,8 +44,6 @@ public class City extends JFrame{
 		setLayout(null);
 		setResizable(false);
 		setVisible(true);
-		
-		JLabel background = new JLabel(new ImageIcon("img/city.png"));
 		setContentPane(background);
 
 		for(int col = 0; col < 5; col++){
@@ -53,20 +54,15 @@ public class City extends JFrame{
 			}
 		}
 
-		scoreBoard = new JPanel();
 		scoreBoard.setLocation(PANEL_X, PANEL_Y);
         scoreBoard.setSize(PANEL_WIDTH, PANEL_HEIGHT);
-        scoreBoard.setLayout(new BorderLayout());
+        scoreBoard.setLayout(new FlowLayout());
         scoreBoard.setOpaque(false);
 
-        pointLabel = new JLabel();
-        pointLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        scoreBoard.add(pointLabel, BorderLayout.EAST);
+        scoreBoard.add(pointLabel);
+        scoreBoard.add(removeLabel);
+        scoreBoard.add(moveLabel);
 
-        moveLabel = new JLabel();
-        moveLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
-        scoreBoard.add(moveLabel, BorderLayout.WEST);
-        
         updatePanel();
         add(scoreBoard);
 	}
@@ -80,8 +76,10 @@ public class City extends JFrame{
 		}
 		else if(timerCount < 10)
 			merging(clicked);
-		else if(timerCount == 10)
+		else if(timerCount == 10){
 			merge(clicked);
+			removeCheck(clicked);
+		}
 		else if(timerCount < 26)
 			falling();
 		else{
@@ -89,7 +87,7 @@ public class City extends JFrame{
 			fill();
 			updatePanel();
 			repaint();
-			check();
+			gameOverCheck();
 			
 			timer.stop();
 			clickDisabled = false;	//enable panel to be clicked 
@@ -175,6 +173,13 @@ public class City extends JFrame{
 		}
 		repaint();
 	}
+	public void removeCheck(Building clicked){
+		if(isMoved == false && remove > 0){
+			remove(clicked);
+			buildings[clicked.getCol()][clicked.getRow()] = null;	
+			remove--;
+		}
+	}	
 	public void falling(){
 		Building[][] tmp = new Building[5][5];
 		for(int col = 0; col < 5; col++){
@@ -225,6 +230,7 @@ public class City extends JFrame{
 		updateMove();
 		pointLabel.setText("Point : " + point);
         moveLabel.setText("Moves : " + move);
+        removeLabel.setText(" x " + remove);
 	}
 	private void updatePoint(){
 		int tmp = 0;
@@ -236,17 +242,19 @@ public class City extends JFrame{
 		point = tmp;
 	}
 	private void updateMove(){
-		if(isMoved == true){
+		if(isMoved == true)
 			move++;
-		}
-		if(move == 30){
-			// Building.addGray();
-		}
+		if(move == 30)
+			addGray();
+		if(move%50 == 0)
+			remove++;
 	}
-	public static void addGray(){
+	private static void addGray(){
 		colors = 4;
 	}	
-	public void check(){
+	public void gameOverCheck(){
+		if(remove > 0)
+			return;
 		boolean isOver = true;
 		for(int i = 0; i < 5; i++){
 			for(int j = 0 ; j < 5 ; j++){
@@ -258,24 +266,40 @@ public class City extends JFrame{
 			for(int j = 0 ; j < 5 ; j++){
 				if(buildings[i][j].toBeMerged == true){
 					isOver = false;
-					break outerLoop;
+					break outerLoop;		
 				}
 			}
 		}
-		if(isOver == false){
+		if(isOver == true){
+			JOptionPane.showMessageDialog(null, "Game Over", null, JOptionPane.INFORMATION_MESSAGE );
+			dispose();
+		}	
+		else{
 			for(int i = 0; i < 5; i++){
 				for(int j = 0 ; j < 5 ; j++){
 					if(buildings[i][j].toBeMerged == true){
-						buildings[i][j].toBeMerged = false;
+						buildings[i][j].toBeMerged = false;				
 					}
 				}
-			}
-		}
-		else{
-			JOptionPane.showMessageDialog(null, "Game Over", null, JOptionPane.INFORMATION_MESSAGE );
-			dispose();
+			}	
 		}
 	}
+	private class myLabel extends JLabel{
+		public myLabel(){
+			super();
+			setFont(new Font("Monospaced", Font.BOLD, 24));
+	        setBorder(BorderFactory.createRaisedBevelBorder());
+	        setOpaque(true);
+	        setBackground(Color.WHITE);
+   		}
+   		public myLabel(ImageIcon i){
+			super(i);
+			setFont(new Font("Monospaced", Font.BOLD, 24));
+	        setBorder(BorderFactory.createRaisedBevelBorder());
+	        setOpaque(true);
+	        setBackground(Color.WHITE);
+	    }
+    }
 	private class ActionClick extends MouseAdapter{
 		public void mouseClicked(MouseEvent e){
 			if(!clickDisabled){

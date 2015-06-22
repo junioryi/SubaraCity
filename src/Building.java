@@ -32,7 +32,7 @@ public class Building extends JPanel{
 	public static final int WIDTH = 100;
 	public static final int HEIGHT = 100;
 	public static final int LEFT_BOARDER = 50;
-	public static final int UPPER_BOARDER = 200;
+	public static final int UPPER_BOARDER = 150;
 	public static final int CHANGE_POINT = 128;
 	public static final int UPGRADE_POINT = 256;
 	
@@ -49,19 +49,6 @@ public class Building extends JPanel{
         setSize(WIDTH, HEIGHT);
 		setBorder(BorderFactory.createRaisedBevelBorder());
 	}	
-	public Building(Building original){
-		super();
-		col = original.col;
-		row = original.row;
-		point = original.point;
-		color = original.color;
-    	updateLevel();
-		updateImg();
-    	updateLocation();
-        
-        setSize(WIDTH, HEIGHT);
-		setBorder(BorderFactory.createRaisedBevelBorder());
-	}
 	public int getCol(){
 		return col;
 	}
@@ -125,7 +112,7 @@ public class Building extends JPanel{
 	}
 	public void upgrade(){
 		color = Colors.GOLDEN;
-		setBorder(BorderFactory.createLoweredBevelBorder());
+		// setBorder(BorderFactory.createLoweredBevelBorder());
 		removeMouseListener(getMouseListeners()[0]);
 	}
 	public void mergeTo(Building target){
