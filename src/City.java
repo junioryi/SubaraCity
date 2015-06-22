@@ -303,7 +303,7 @@ public class City extends JFrame{
 	private class ActionClick extends MouseAdapter{
 		public void mouseClicked(MouseEvent e){
 			if(!clickDisabled){
-				Building clicked = (Building)e.getComponent();
+				final Building clicked = (Building)e.getComponent();
 				timer = new Timer(50, new ActionListener(){
 					public void actionPerformed(ActionEvent e){
 						click(clicked);
