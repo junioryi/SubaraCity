@@ -14,10 +14,14 @@ public class City extends JFrame{
 	private static Image[] green = new Image[7];
 	private static Image[] brown = new Image[7];
 	private static Image[] darkGray = new Image[7];
-	private static Image[] darkGreen = new Image[7];	
+	private static Image[] darkGreen = new Image[7];
+	private static AudioPlayer mergeSound = new AudioPlayer(new File("sound/merge.wav"));	
+	private static AudioPlayer overSound = new AudioPlayer(new File("sound/over.wav"));	
+	private static AudioPlayer removeSound = new AudioPlayer(new File("sound/remove.wav"));	
 
 	private ScoreBoard scoreBoard = new ScoreBoard();
-	private JLabel background = new JLabel(new ImageIcon("img/city.png"));
+	// private FunctionBoard functionBoard = new FunctionBoard();
+	private JLabel background = new JLabel();
 	private Building[][] buildings = new Building[5][5];
 
 	private Timer timer;
@@ -33,6 +37,7 @@ public class City extends JFrame{
 		setVisible(true);
 		setResizable(false);
 		setSize(FRAME_WIDTH, FRAME_HEIGHT);
+		setLocationRelativeTo(null);
 		setContentPane(background);
 
 		for(int col = 0; col < 5; col++){
@@ -182,6 +187,8 @@ public class City extends JFrame{
 			}
 		}
 		if(toMove == false){
+			removeSound.play();
+			clicked.setBorder(BorderFactory.createLoweredBevelBorder());
 			Object[] options = { "確定", "再看看"};
 			if(scoreBoard.excavator > 0 && JOptionPane.showOptionDialog(null, "確定要摧毀這棟房子嗎？", "挖土機來了！", 
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null , options, null) == JOptionPane.OK_OPTION){
@@ -191,6 +198,7 @@ public class City extends JFrame{
 				timerCount = 11;	
 			}
 			else{
+				clicked.setBorder(BorderFactory.createRaisedBevelBorder());
 				timer.stop();
 				clickDisabled = false;	//enable panel to be clicked 
 			}	
@@ -218,6 +226,7 @@ public class City extends JFrame{
 			}
 		}
 		if(isOver == true){
+			overSound.play();
 			Object[] options = { "是", "放棄"};
 			if(JOptionPane.showOptionDialog(null, "是否要重建城市？", "人口爆炸！", 
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null , options, null) == JOptionPane.OK_OPTION){			
@@ -305,8 +314,10 @@ public class City extends JFrame{
 			}
 			else if(timerCount < 10)
 				merging(clicked);
-			else if(timerCount == 10)
+			else if(timerCount == 10){
+				mergeSound.play();
 				merge(clicked);
+			}
 			else if(timerCount < 26)
 				falling();
 			else{
@@ -322,31 +333,15 @@ public class City extends JFrame{
 			timerCount++;
 		}	
 	}
-	private class myLabel extends JLabel{
-		public myLabel(){
-			super();
-			setFont(new Font("Monospaced", Font.BOLD, 18));
-	        setBorder(BorderFactory.createRaisedBevelBorder());
-	        setOpaque(true);
-	        setBackground(Color.WHITE);
-   		}
-   		public myLabel(ImageIcon i){
-			super(i);
-			setFont(new Font("Monospaced", Font.BOLD, 18));
-	        setBorder(BorderFactory.createRaisedBevelBorder());
-	        setOpaque(true);
-	        setBackground(Color.WHITE);
-	    }
-    }
 	private class ScoreBoard extends JPanel{
 		private static final int PANEL_WIDTH = 500;
-		private static final int PANEL_HEIGHT = 100;
+		private static final int PANEL_HEIGHT = 80;
 		private static final int PANEL_X = 50;
-		private static final int PANEL_Y = 50;	
+		private static final int PANEL_Y = 100;	
 
-		private JLabel excavatorLabel = new myLabel(new ImageIcon("img/excavator.png"));
-		private JLabel pointLabel = new myLabel();
-		private JLabel moveLabel = new myLabel();	
+		private MyLabel excavatorLabel = new MyLabel(new ImageIcon("img/excavator.png"));
+		private MyLabel pointLabel = new MyLabel();
+		private MyLabel moveLabel = new MyLabel();	
 
 		private int point = 0;
 		private int move = 0;
@@ -355,21 +350,19 @@ public class City extends JFrame{
 		public ScoreBoard(){
 			setLocation(PANEL_X, PANEL_Y);
 	        setSize(PANEL_WIDTH, PANEL_HEIGHT);
-	        setLayout(new FlowLayout());
+	        setLayout(new GridLayout(1, 0));
 	        setOpaque(false);
 
-	        add(pointLabel);
-	        add(new JLabel("       "));
-	        add(excavatorLabel);
-	        add(new JLabel("       "));
 	        add(moveLabel);
+	        add(pointLabel);
+	        add(excavatorLabel);
 	    }
 	    public void update(){
 			updatePoint();
 			updateColors();
 			updateExcavator();
-			pointLabel.setText("Point : " + point);
-		    moveLabel.setText("Moves : " + move);
+			pointLabel.setText("<html><center>Population<br>" + point + "</center></html>");
+		    moveLabel.setText("<html><center>Year<br>" + (1900+move) + "</center></html>");
 		    excavatorLabel.setText(" x " + excavator);
 		}
 		private void updatePoint(){
@@ -388,9 +381,32 @@ public class City extends JFrame{
 		private void updateExcavator(){
 			if(move%50 == 0)
 				excavator++;
+		}	
+		private class MyLabel extends JLabel{
+			public MyLabel(){
+				super("", SwingConstants.CENTER);
+				setFont(new Font("Monospaced", Font.BOLD, 24));
+		        setBorder(BorderFactory.createRaisedBevelBorder());
+		        setOpaque(true);
+		        setBackground(Color.WHITE);
+				}
+				public MyLabel(ImageIcon i){
+				super(i);
+				setFont(new Font("Monospaced", Font.BOLD, 24));
+		        setBorder(BorderFactory.createRaisedBevelBorder());
+		        setOpaque(true);
+		        setBackground(Color.WHITE);
+		    }
+		    public MyLabel(String i){
+				super(i, SwingConstants.CENTER);
+				setFont(new Font("Monospaced", Font.BOLD, 24));
+		        setBorder(BorderFactory.createRaisedBevelBorder());
+		        setOpaque(true);
+		        setBackground(Color.WHITE);
+		    }
 		}
-	}
-	private class Building extends JPanel implements Cloneable{
+	}		
+    private class Building extends JPanel implements Cloneable{
 		private int col;
 		private int row;	
 		private int point;
@@ -408,7 +424,7 @@ public class City extends JFrame{
 		private static final int WIDTH = 100;
 		private static final int HEIGHT = 100;
 		private static final int LEFT_BOARDER = 50;
-		private static final int UPPER_BOARDER = 150;
+		private static final int UPPER_BOARDER = 200;
 		private static final int CHANGE_POINT = 128;
 		private static final int UPGRADE_POINT = 256;
 		
@@ -473,7 +489,6 @@ public class City extends JFrame{
 		}
 		public void upgrade(){
 			color = Colors.GOLDEN;
-			setBorder(BorderFactory.createLoweredBevelBorder());
 			removeMouseListener(getMouseListeners()[0]);
 		}
 		public void mergeTo(Building target){
